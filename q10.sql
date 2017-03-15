@@ -13,7 +13,7 @@ CREATE TABLE q10 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS intermediate_step CASCADE;
+DROP VIEW IF EXISTS assignment_total, group_marks, groups_one, a1_average, group_percent CASCADE;
 
 -- Define views for your intermediate steps here.
 
@@ -24,6 +24,15 @@ CREATE VIEW assignment_total AS (
 	HAVING assignment_id = 1
 );
 
+-- Group weighted marks (not percentage)
+CREATE VIEW group_marks AS (
+	SELECT t1.group_id, SUM(t2.weight*t1.grade) AS mark
+	FROM Grade AS t1 JOIN RubricItem AS t2
+	     ON (t1.rubric_id = t2.rubric_id)
+	GROUP BY t1.group_id
+);
+
+
 CREATE VIEW groups_one AS (
 	SELECT group_id, total
 	FROM (AssignmentGroup NATURAL JOIN assignment_total)
@@ -32,20 +41,16 @@ CREATE VIEW groups_one AS (
 
 CREATE VIEW a1_average AS (
 	SELECT AVG(mark) AS average
-	FROM  groups_one JOIN Result
-		ON (groups_one.group_id = Result.group_id)
+	FROM  groups_one NATURAL JOIN group_marks
 );
 
-CREATE VIEW group_mark AS (
+CREATE VIEW group_percent AS (
 	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, (t3.mark - t3.average) AS compared_to_average 
 	FROM ((groups_one CROSS JOIN a1_average) AS t1
-		NATURAL JOIN (groups_one NATURAL JOIN Result) AS t2
+		NATURAL JOIN (groups_one NATURAL JOIN group_marks) AS t2
 		) AS t3
 		
 );
-
-
-
 
 -- Final answer.
 INSERT INTO q10(
@@ -54,6 +59,6 @@ INSERT INTO q10(
 			 WHEN compared_to_average > 0 THEN 'above'
 			 WHEN compared_to_average = 0 THEN 'at'
 		END AS status
-	FROM group_mark
+	FROM group_percent
 );
 	-- put a final query here so that its results will go into the table.
