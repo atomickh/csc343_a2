@@ -20,32 +20,34 @@ CREATE TABLE q6 (
 DROP VIEW IF EXISTS A1_group, first_sub, last_sub CASCADE;
 
 -- Define views for your intermediate steps here.
-CREATE VIEW A1_group AS
+CREATE VIEW A1_group AS (
 	SELECT group_id
 	FROM AssignmentGroup
-	WHERE assignment_id = 1;
+	WHERE assignment_id = 1
+);
 	
-CREATE VIEW first_sub AS
+CREATE VIEW first_sub AS (
+	SELECT t1.file_name, t1.username, t1.group_id, t1.submission_date
+	FROM Submissions AS t1
+		JOIN (
+			SELECT t3.group_id, MIN(submission_date) AS first_date
+			FROM Submissions AS t3
+			GROUP BY t3.group_id
+			HAVING EXISTS(SELECT 1 FROM A1_group WHERE t3.group_id = A1_group.group_id)
+		) AS t2 ON (t1.group_id = t2.group_id AND t1.submission_date = t2.first_date)
+);	
+		
+		
+CREATE VIEW last_sub AS (
 	SELECT t1.file_name, t1.username, t1.group_id, t1.submission_date
 	FROM Submissions AS t1
 		JOIN(
-			SELECT group_id, MIN(submission_date) AS first_date
-			FROM Submissions AS t2
-			GROUP BY group_id
-			WHERE group_id IN A1_group
-		) ON (t1.group_id = t2.group_id AND t1.submission_date = t2.first_date);
-		
-		
-		
-CREATE VIEW last_sub AS
-	SELECT t1.file_name, t1.username, t1.group_id, t1.submission_date
-	FROM Submissions AS t1
-		JOIN(
-			SELECT group_id, MAX(submission_date) AS last_date
-			FROM Submissions AS t2
-			GROUP BY group_id
-			WHERE group_id IN A1_group
-		) ON (t1.group_id = t2.group_id AND t1.submission_date = t2.last_date);
+			SELECT t3.group_id, MAX(submission_date) AS last_date
+			FROM Submissions AS t3
+			GROUP BY t3.group_id
+			HAVING EXISTS(SELECT 1 FROM A1_group WHERE t3.group_id = A1_group.group_id)
+		) AS t2 ON (t1.group_id = t2.group_id AND t1.submission_date = t2.last_date)
+);
 
 	
 	
