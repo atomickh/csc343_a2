@@ -3,6 +3,7 @@ import java.sql.*;
 // Remember that part of your mark is for doing as much in SQL (not Java) 
 // as you can. At most you can justify using an array, or the more flexible
 // ArrayList. Don't go crazy with it, though. You need it rarely if at all.
+//check
 import java.util.ArrayList;
 
 public class Assignment2 {
@@ -34,8 +35,14 @@ public class Assignment2 {
      * @return true if connecting is successful, false otherwise
      */
     public boolean connectDB(String URL, String username, String password) {
-        // Replace this return statement with an implementation of this method!
-        return false;
+	String pathURL;
+        try {
+	    pathURL = URL+"searchpath=markus";
+            connection = DriverManager.getConnection(pathURL, username, password);
+            return True;
+        } catch (SQLException ex) {
+            return False;
+        }
     }
 
     /**
@@ -44,8 +51,12 @@ public class Assignment2 {
      * @return true if the closing was successful, false otherwise
      */
     public boolean disconnectDB() {
-        // Replace this return statement with an implementation of this method!
-        return false;
+        try {
+            connection.close();
+            return true;
+        } catch (SQLException ex) {
+            return false;
+        }
     }
 
     /**
@@ -62,8 +73,59 @@ public class Assignment2 {
      * @return true if the operation was successful, false otherwise
      */
     public boolean assignGrader(int groupID, String grader) {
-        // Replace this return statement with an implementation of this method!
-        return false;
+	PreparedStatement pStatement;
+	ResultSet rs;
+	String queryString;
+	try{
+	    // Check if grader exists and is a ta 
+	    queryString = "SELECT * FROM MarkusUser WHERE username = ?";
+	    pStatement = conn.prepareStatement(queryString);
+	    pStatement.setString(grader);
+	    rs = pStatement.executeQuery();
+
+	    if (rs.next()) {
+		String role = rs.getString("type");
+		if (role != "ta" AND role != "instructor"){
+		    return false;
+		}
+	    } else {
+		return false;
+	    }
+	    
+	    
+	    // Check if group exists in AssignmentGroup
+	    queryString = "SELECT * FROM AssignmentGroup WHERE group_id = ?";
+	    pStatement = conn.prepareStatement(queryString);
+	    pStatement.setString(groupID);
+	    rs = pStatement.executeQuery();
+	    
+	    if (!rs.next()) {
+		return false;
+	    }
+	    
+	    // Check if group is already assigned
+	    queryString = "SELECT * FROM Grader WHERE group_id = ?";
+	    pStatement = conn.prepareStatement(queryString);
+	    pStatement.setString(groupID);
+	    rs = pStatement.executeQuery();
+	    
+	    if (rs.next()) {
+		return false;
+	    }
+	    
+	    // Insert row into Grader
+	    queryString = "INSERT INTO Grader (group_id, username)"+
+			  "VALUES (?, ?);";
+	    pStatement = conn.prepareStatement(queryString);
+	    pStatement.setString(groupID, grader);
+	    rs = pStatement.executeUpdate();	    
+	    
+	    return true;
+	} catch (SQLException ex) {
+	    return false
+	}
+
+
     }
 
     /**
