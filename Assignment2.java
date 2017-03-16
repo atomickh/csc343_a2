@@ -39,9 +39,9 @@ public class Assignment2 {
         try {
 	    pathURL = URL+"searchpath=markus";
             connection = DriverManager.getConnection(pathURL, username, password);
-            return True;
+            return true;
         } catch (SQLException ex) {
-            return False;
+            return false;
         }
     }
 
@@ -79,13 +79,13 @@ public class Assignment2 {
 	try{
 	    // Check if grader exists and is a ta 
 	    queryString = "SELECT * FROM MarkusUser WHERE username = ?";
-	    pStatement = conn.prepareStatement(queryString);
-	    pStatement.setString(grader);
+	    pStatement = connection.prepareStatement(queryString);
+	    pStatement.setString(1, grader);
 	    rs = pStatement.executeQuery();
 
 	    if (rs.next()) {
 		String role = rs.getString("type");
-		if (role != "ta" AND role != "instructor"){
+		if (role != "ta" && role != "instructor"){
 		    return false;
 		}
 	    } else {
@@ -95,8 +95,8 @@ public class Assignment2 {
 	    
 	    // Check if group exists in AssignmentGroup
 	    queryString = "SELECT * FROM AssignmentGroup WHERE group_id = ?";
-	    pStatement = conn.prepareStatement(queryString);
-	    pStatement.setString(groupID);
+	    pStatement = connection.prepareStatement(queryString);
+	    pStatement.setString(1, Integer.toString(groupID));
 	    rs = pStatement.executeQuery();
 	    
 	    if (!rs.next()) {
@@ -105,8 +105,8 @@ public class Assignment2 {
 	    
 	    // Check if group is already assigned
 	    queryString = "SELECT * FROM Grader WHERE group_id = ?";
-	    pStatement = conn.prepareStatement(queryString);
-	    pStatement.setString(groupID);
+	    pStatement = connection.prepareStatement(queryString);
+	    pStatement.setString(1, Integer.toString(groupID));
 	    rs = pStatement.executeQuery();
 	    
 	    if (rs.next()) {
@@ -116,13 +116,14 @@ public class Assignment2 {
 	    // Insert row into Grader
 	    queryString = "INSERT INTO Grader (group_id, username)"+
 			  "VALUES (?, ?);";
-	    pStatement = conn.prepareStatement(queryString);
-	    pStatement.setString(groupID, grader);
-	    rs = pStatement.executeUpdate();	    
+	    pStatement = connection.prepareStatement(queryString);
+	    pStatement.setString(1, Integer.toString(groupID));
+	    pStatement.setString(2, grader);
+	    int updateRes = pStatement.executeUpdate();	    
 	    
 	    return true;
 	} catch (SQLException ex) {
-	    return false
+	    return false;
 	}
 
 
