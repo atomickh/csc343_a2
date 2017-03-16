@@ -46,9 +46,7 @@ CREATE VIEW a1_average AS (
 CREATE VIEW group_percent AS (
 	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, (t3.mark - t3.average)*t3.mark/t3.mark AS compared_to_average 
 	FROM ((groups_one NATURAL LEFT JOIN a1_average) AS t1
-		NATURAL JOIN (groups_one LEFT JOIN group_marks ON groups_one.group_id = group_marks.group_id) AS t2
-		) AS t3
-		
+		NATURAL JOIN (groups_one NATURAL LEFT JOIN group_marks ON groups_one.group_id = group_marks.group_id) AS t2) AS t3
 );
 
 -- Final answer.
