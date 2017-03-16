@@ -5,9 +5,9 @@ DROP TABLE IF EXISTS q5;
 
 -- You must not change this table definition.
 CREATE TABLE q5 (
-	assignment_id integer,
-	username varchar(25), 
-	num_assigned integer
+        assignment_id integer,
+        username varchar(25),
+        num_assigned integer
 );
 
 -- You may find it convenient to do this for each of the views
@@ -47,5 +47,5 @@ WHERE count_groups.assignment_id=required_assignment_id.assignment_id;
 -- Final answer.
 INSERT INTO q5(assignment_id,username,num_assigned)
 (SELECT assignment_id,username,num_assigned
-FROM required_table); 
-	-- put a final query here so that its results will go into the table.
+FROM required_table);
+        -- put a final query here so that its results will go into the table.

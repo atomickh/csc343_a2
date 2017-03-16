@@ -5,9 +5,9 @@ DROP TABLE IF EXISTS q2;
 
 -- You must not change this table definition.
 CREATE TABLE q2 (
-	ta_name varchar(100),
-	average_mark_all_assignments real,
-	mark_change_first_last real
+        ta_name varchar(100),
+        average_mark_all_assignments real,
+        mark_change_first_last real
 );
 
 -- You may find it convenient to do this for each of the views
@@ -39,7 +39,7 @@ WHERE AssignmentGroup.group_id = Grader.group_id AND Grader.group_id = Result.gr
 
 --view to calculate total out-of mark
 CREATE VIEW total_possible_mark_for_each_assignment(assignment_id, total_out_of) AS
-SELECT assignment_id, (SUM(weight*out_of)) as total_out_of	  
+SELECT assignment_id, (SUM(weight*out_of)) as total_out_of
 FROM RubricItem
 GROUP BY assignment_id;
 
@@ -51,7 +51,7 @@ GROUP BY group_id;
 
 --join upper three views
 CREATE VIEW grading_done(username, assignment_id, assignment_due_date, group_id, groupStrength, total_mark, total_out_of) AS
-SELECT grader_history.username, grader_history.assignment_id, grader_history.assignment_due_date, grader_history.group_id, group_strength.groupStrength, grader_history.total_mark,total_possible_mark_for_each_assignment.total_out_of 
+SELECT grader_history.username, grader_history.assignment_id, grader_history.assignment_due_date, grader_history.group_id, group_strength.groupStrength, grader_history.total_mark,total_possible_mark_for_each_assignment.total_out_of
 FROM grader_history, total_possible_mark_for_each_assignment, group_strength
 WHERE grader_history.assignment_id = total_possible_mark_for_each_assignment.assignment_id AND grader_history.group_id = group_strength.group_id ;
 
@@ -60,7 +60,7 @@ CREATE VIEW constraint_one(username) AS
 SELECT grading_done.username
 FROM grading_done
 GROUP BY grading_done.username
-HAVING count(DISTINCT grading_done.assignment_id) = 
+HAVING count(DISTINCT grading_done.assignment_id) =
 (SELECT count(DISTINCT Assignment.assignment_id)
 FROM Assignment);
 
@@ -88,16 +88,16 @@ GROUP BY username, assignment_id, assignment_due_date;
 
 -- to check third constraint 'The average grade they have given has gone up consistently from assignment to assignment over time (based on the assignment due date).'
 CREATE VIEW constraint_third(username, assignment_id) AS
-SELECT a.username, a.assignment_id 
+SELECT a.username, a.assignment_id
 FROM q2_avg_percentage a, q2_avg_percentage b
-WHERE a.username = b.username AND a.assignment_due_date < b.assignment_due_date AND a.avg_percentage < b.avg_percentage
+WHERE a.username = b.username AND a.assignment_id <> b.assignment_id AND a.assignment_due_date < b.assignment_due_date AND a.avg_percentage < b.avg_percentage
 GROUP BY a.username, a.assignment_id
 HAVING count(*) = (
-SELECT count(*)
+SELECT count(*)-1 as count
 FROM q2_avg_percentage c
 WHERE c.username = a.username AND c.assignment_id = a.assignment_id
 GROUP BY c.username, c.assignment_id
-); 
+);
 
 -- to calculate overall average for each grader i.e. including all assignments
 CREATE VIEW q2_total_avg_grader(username, total_average) AS
@@ -108,20 +108,22 @@ GROUP BY username;
 -- to apply constraints to TA, i.e. apply our above three constraints
 CREATE VIEW required_ta_names(username) AS
 SELECT constraint_one.username
-FROM constraint_one, constraint_two, constaint_third
+FROM constraint_one, constraint_two, constraint_third
 WHERE constraint_one.username = constraint_two.username AND constraint_two.username = constraint_third.username;
 
 -- to get TA name
 CREATE VIEW taNames(username, ta_name) AS
 SELECT username, (firstname|| ' '|| surname) as ta_name
-FROM MarkusUser;
+FROM MarkusUser
+WHERE type = 'TA';
 
 
 -- to calculate the increase of grades from first to last assignment for each grader
 CREATE VIEW increase(username, grade_increase) AS
 SELECT a.username, max(a.avg_percentage)-min(a.avg_percentage)
 FROM q2_avg_percentage a, required_ta_names b
-WHERE a.username = b.username;
+WHERE a.username = b.username
+GROUP BY a.username;
 
 --now the required table
 CREATE VIEW q2_required_table(ta_name, average_mark_all_assignments, mark_change_first_last) AS
@@ -131,5 +133,5 @@ WHERE taNames.username = q2_total_avg_grader.username AND taNames.username = inc
 -- Final answer.
 INSERT INTO q2 (ta_name, average_mark_all_assignments, mark_change_first_last)
 (SELECT ta_name, average_mark_all_assignments, mark_change_first_last
-FROM q2_required_table);	
+FROM q2_required_table);
 -- put a final query here so that its results will go into the table.
