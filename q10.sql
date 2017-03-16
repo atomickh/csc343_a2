@@ -32,9 +32,9 @@ CREATE VIEW group_marks AS (
 	GROUP BY t1.group_id
 );
 
-
+-- Groups assigned to A1
 CREATE VIEW groups_one AS (
-	SELECT group_id, total
+	SELECT DISTINCT group_id, total
 	FROM (AssignmentGroup NATURAL JOIN assignment_total)
 );
 
@@ -44,9 +44,9 @@ CREATE VIEW a1_average AS (
 );
 
 CREATE VIEW group_percent AS (
-	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, (t3.mark - t3.average) AS compared_to_average 
-	FROM ((groups_one CROSS JOIN a1_average) AS t1
-		NATURAL JOIN (groups_one NATURAL JOIN group_marks) AS t2
+	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, (t3.mark - t3.average)*t3.mark/t3.mark AS compared_to_average 
+	FROM ((groups_one  JOIN a1_average) AS t1
+		NATURAL JOIN (groups_one LEFT JOIN group_marks ON groups_one.group_id = group_marks.group_id) AS t2
 		) AS t3
 		
 );
@@ -54,9 +54,11 @@ CREATE VIEW group_percent AS (
 -- Final answer.
 INSERT INTO q10(
 	SELECT group_id, mark, compared_to_average,
-		CASE WHEN compared_to_average < 0 THEN 'below'
+		CASE WHEN compared_to_average = null THEN null 
+			 WHEN compared_to_average < 0 THEN 'below'
 			 WHEN compared_to_average > 0 THEN 'above'
 			 WHEN compared_to_average = 0 THEN 'at'
+			 
 		END AS status
 	FROM group_percent
 );
