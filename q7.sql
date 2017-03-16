@@ -31,14 +31,14 @@ CREATE VIEW exist_pairs AS (
 
 -- All student TA Pairs that can occur and actually occurred
 CREATE VIEW all_ts_pairs AS(
-	SELECT DISTINCT t1.username, t2.username AS student
+	SELECT t1.username, t2.username AS student
 	FROM MarkusUser AS t1 
 		JOIN MarkusUser AS t2
 		ON (t1.type = 'TA' AND t2.type = 'student')
 );
 
 CREATE VIEW exist_ts_pairs AS(
-	SELECT DISTINCT t1.username, t2.username AS student
+	SELECT t1.username, t2.username AS student
 	FROM exist_pairs AS t1
 		JOIN (	SELECT t3.username, t4.group_id 
 				FROM Membership AS t3 
@@ -50,12 +50,12 @@ CREATE VIEW exist_ts_pairs AS(
 
 -- All TA assignment pairs that can occur and actually occurred
 CREATE VIEW all_tas_pairs AS(
-	SELECT DISTINCT username, assignment_id
+	SELECT username, assignment_id
 	FROM all_pairs
 );
 
 CREATE VIEW exist_tas_pairs AS(
-	SELECT DISTINCT username, assignment_id
+	SELECT username, assignment_id
 	FROM exist_pairs
 );
 

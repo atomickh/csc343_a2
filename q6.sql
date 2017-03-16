@@ -23,7 +23,7 @@ DROP VIEW IF EXISTS A1_group, first_sub, last_sub CASCADE;
 CREATE VIEW A1_group AS (
 	SELECT group_id
 	FROM AssignmentGroup
-	WHERE assignment_id = 1
+	WHERE description = 'A1'
 );
 	
 CREATE VIEW first_sub AS (

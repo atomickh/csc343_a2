@@ -36,7 +36,7 @@ CREATE VIEW group_marks AS (
 CREATE VIEW groups_one AS (
 	SELECT group_id, total
 	FROM (AssignmentGroup NATURAL JOIN assignment_total)
-	WHERE assignment_id = 1
+	WHERE description = 'A1'
 );
 
 CREATE VIEW a1_average AS (

@@ -48,7 +48,7 @@ CREATE VIEW not_always AS (
 
 -- Final answer.
 INSERT INTO q9 (
-	SELECT DISTINCT (student1, student2) 
+	SELECT DISTINCT student1, student2
 	FROM (SELECT student1, student2 FROM all_pairs EXCEPT SELECT * FROM not_always) AS t1
 );
 	-- put a final query here so that its results will go into the table.
