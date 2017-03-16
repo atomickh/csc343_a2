@@ -16,26 +16,29 @@ DROP VIEW IF EXISTS multi_groups, solo_groups, contributed, always_grouped, assi
 
 -- Define views for your intermediate steps here.
 
+-- Groups that are allowed more than one people
 CREATE VIEW multi_groups AS (
 	SELECT t2.group_id 
 	FROM Assignment AS t1 JOIN AssignmentGroup AS t2
 		ON (t1.assignment_id = t2.assignment_id AND t1.group_max > 1)
 );
 
+-- Groups where they are voluntarily solo
 CREATE VIEW solo_groups AS (
 	(SELECT Membership.group_id
 	FROM Membership 
 	GROUP BY group_id
-	HAVING COUNT(*) = 1)
+	HAVING COUNT(username) = 1)
 	INTERSECT 
 	(SELECT * FROM multi_groups)
 );
 
+-- The people and assignments for which they submitted files
 CREATE VIEW contributed AS (
-	SELECT DISTINCT username
-	FROM Submissions 
+	SELECT DISTINCT Submissions.username, AssignmentGroup.assignment_id
+	FROM Submissions NATURAL JOIN AssignmentGroup NATURAL JOIN Assignment
 	WHERE NOT EXISTS(SELECT 1 FROM solo_groups WHERE Submissions.group_id = solo_groups.group_id)
-);	
+);
 
 CREATE VIEW always_grouped AS (
 	(SELECT DISTINCT username FROM MarkusUser WHERE type = 'student')
@@ -43,6 +46,12 @@ CREATE VIEW always_grouped AS (
 	( SELECT username 
 	  FROM Membership JOIN solo_groups 
 	  ON (Membership.group_id = solo_groups.group_id))
+);
+
+CREATE VIEW not_always_contributed AS (
+	SELECT DISTINCT username 
+	FROM (SELECT username, assignment_id FROM MarkusUser CROSS JOIN Assignment WHERE type = 'student'
+			EXCEPT SELECT * FROM contributed) AS t1
 );
 
 
@@ -68,7 +77,7 @@ CREATE VIEW group_associated AS (
 	FROM Result AS t1 JOIN Membership AS t2 
 		ON (t1.group_id = t2.group_id AND 
 			EXISTS(SELECT 1 
-				FROM (SELECT * FROM always_grouped INTERSECT SELECT * FROM contributed) AS t4
+				FROM (SELECT * FROM always_grouped EXCEPT SELECT * FROM not_always_contributed) AS t4
 				WHERE t2.username = t4.username))
 		JOIN AssignmentGroup AS t3
 		ON (t3.group_id = t1.group_id AND t3.group_id = t2.group_id)

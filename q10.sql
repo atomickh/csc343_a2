@@ -18,10 +18,10 @@ DROP VIEW IF EXISTS assignment_total, group_marks, groups_one, a1_average, group
 -- Define views for your intermediate steps here.
 
 CREATE VIEW assignment_total AS (
-	SELECT DISTINCT assignment_id, SUM(out_of) AS total 
-	FROM RubricItem
-	GROUP BY assignment_id
-	HAVING assignment_id = 1
+	SELECT DISTINCT assignment_id, SUM(out_of) AS total
+	FROM RubricItem NATURAL JOIN Assignment
+	GROUP BY assignment_id, description
+	HAVING Assignment.description = 'A1'
 );
 
 -- Group weighted marks (not percentage)
@@ -36,7 +36,6 @@ CREATE VIEW group_marks AS (
 CREATE VIEW groups_one AS (
 	SELECT group_id, total
 	FROM (AssignmentGroup NATURAL JOIN assignment_total)
-	WHERE description = 'A1'
 );
 
 CREATE VIEW a1_average AS (

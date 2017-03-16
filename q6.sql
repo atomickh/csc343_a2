@@ -22,8 +22,8 @@ DROP VIEW IF EXISTS A1_group, first_sub, last_sub CASCADE;
 -- Define views for your intermediate steps here.
 CREATE VIEW A1_group AS (
 	SELECT group_id
-	FROM AssignmentGroup
-	WHERE description = 'A1'
+	FROM AssignmentGroup NATURAL JOIN Assignment
+	WHERE Assignment.description = 'A1'
 );
 	
 CREATE VIEW first_sub AS (
