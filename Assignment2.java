@@ -133,11 +133,11 @@ public class Assignment2 {
 	    pStatement.setString(2, grader);
 	    int updateRes = pStatement.executeUpdate();	    
 	    rs.close();
-		pStatement.close90;
+		pStatement.close();
 	    return true;
 	} catch (SQLException ex) {
 	    rs.close();
-		pStatement.close90;
+		pStatement.close();
 		return false;
 	}
 
@@ -292,7 +292,7 @@ public class Assignment2 {
 
     public boolean createGroups(int assignmentToGroup, int otherAssignment,
             String repoPrefix) {
-        // Replace this return statement with an implementation of this method!
+    /*     // Replace this return statement with an implementation of this method!
 
      // array list to hold  student grades from otherAssignment
     ArrayList<assignment_grades> assignment_grades_arraylist = new ArrayList<assignment_grades>();
@@ -305,7 +305,6 @@ public class Assignment2 {
                   "FROM AssignmentGroup NATURAL JOIN Membership NATURAL JOIN Result "
                   "WHERE Result.released = true;" ;
     ResultSet rs = st.executeQuery(queryString);
-     
     while (rs.next()) {
     //storing in class assignment_grades
     assignment_grades student_record = new assignment_grades();
@@ -314,13 +313,13 @@ public class Assignment2 {
     student_record.grade = rs.getFloat("grade");
     //adding to assignment_grades_arraylist
     assignment_grades_arraylist.add(person);
-/* If the tuple also had a float and another int  
-attribute, you’d get them by calling   worths.getFloat(2) and worths.getInt(3). 
-Or you can look up values by attribute name.  Example: worths.getInt(netWorth) 
+/* If the tuple also had a float and another int 
+attribute, you’d get them by calling  worths.getFloat(2) and worths.getInt(3).
+Or you can look up values by attribute name. Example: worths.getInt(netWorth)
 */
    /* OMITTED: Process this net worth */
 }
-
+ */
         return false;
     }
 
