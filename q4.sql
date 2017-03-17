@@ -15,7 +15,7 @@ CREATE TABLE q4 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS intermediate_step CASCADE;
+
 DROP VIEW IF EXISTS graders_assigned CASCADE;
 DROP VIEW IF EXISTS assignment_graded CASCADE;
 DROP VIEW IF EXISTS assignment_not_graded CASCADE;
@@ -52,13 +52,13 @@ FROM assignment_graded);
 
 --to count num of assignment graded
 CREATE VIEW count_assignment_graded(assignment_id, username, num_marked) AS
-SELECT assignment_id, username, CASE WHEN count(*) IS NULL THEN 0 ELSE count(*) END
+SELECT assignment_id, username, count(*)
 FROM assignment_graded
 GROUP BY assignment_id, username;
 
 --to count num of assignment not graded
 CREATE VIEW count_assignment_not_graded(assignment_id, username, num_not_marked) AS
-SELECT assignment_id, username, CASE WHEN count(*) IS NULL THEN 0 ELSE count(*) END
+SELECT assignment_id, username, count(*)
 FROM assignment_not_graded
 GROUP BY assignment_id, username;
 
@@ -71,7 +71,7 @@ WHERE RubricItem.rubric_id = Grade.rubric_id AND Grade.group_id = Grader.group_i
 -- create a view to calculate total mark and grades got
 CREATE VIEW q4_grades(assignment_id, username, group_id, total_mark, grade_recieved) AS
 SELECT assignment_id,username, group_id, SUM(weight*out_of) as total_mark, SUM(weight*grade) as grade_recieved
-FROM q3_every_group_grade_for_every_assignment
+FROM q4_every_group_grade_for_every_assignment
 GROUP BY assignment_id, username, group_id;
 
 -- creata a view for percentage
@@ -87,11 +87,11 @@ GROUP BY assignment_id, username;
 
 --required view
 CREATE VIEW q4_required_table(assignment_id, username, num_marked, num_not_marked, min_mark, max_mark) AS
-SELECT grade_min_max.assignment_id, grade_min_max.username, count_assignment_graded.num_marked, count_assignment_not_graded.num_not_marked, grade_min_max.min_mark, grade_min_max.max_mark
-FROM count_assignment_not_graded, grade_min_max, count_assignment_graded
-WHERE (count_assignment_graded.assignment_id = grade_min_max.assignment_id AND count_assignment_not_graded.assignment_id = grade_min_max.assignment_id
-AND count_assignment_graded.username = grade_min_max.username AND count_assignment_not_graded.username = grade_min_max.username)
-;
+SELECT grade_min_max.assignment_id, grade_min_max.username, coalesce(num_marked,0), coalesce(num_not_marked,0), grade_min_max.min_mark, grade_min_max.max_mark
+FROM count_assignment_not_graded NATURAL FULL JOIN grade_min_max NATURAL FULL JOIN count_assignment_graded;
+--WHERE (count_assignment_graded.assignment_id = grade_min_max.assignment_id AND count_assignment_not_graded.assignment_id = grade_min_max.assignment_id
+--AND count_assignment_graded.username = grade_min_max.username AND count_assignment_not_graded.username = grade_min_max.username)
+--
 
 
 -- Final answer.
