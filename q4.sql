@@ -36,11 +36,35 @@ SELECT AssignmentGroup.assignment_id, AssignmentGroup.group_id, Grader.username
 FROM AssignmentGroup, Grader
 WHERE AssignmentGroup.group_id = Grader.group_id;
 
+
+
+
+
+-- create a view for every grade by every group for every assignment
+CREATE VIEW q4_every_group_grade_for_every_assignment(assignment_id, username, group_id, rubric_id, weight, out_of, grade) AS
+SELECT RubricItem.assignment_id, Grader.username, Grade.group_id, RubricItem.rubric_id, RubricItem.weight, RubricItem.out_of, Grade.grade
+FROM RubricItem ,Grader, Grade
+WHERE RubricItem.rubric_id = Grade.rubric_id AND Grade.group_id = Grader.group_id;
+
+
+-- create a view to calculate total mark and grades got
+CREATE VIEW q4_grades(assignment_id, username, group_id, total_mark, grade_recieved) AS
+SELECT assignment_id,username, group_id, SUM(weight*out_of) as total_mark, SUM(weight*grade) as grade_recieved
+FROM q4_every_group_grade_for_every_assignment
+GROUP BY assignment_id, username, group_id;
+
+-- creata a view for percentage
+CREATE VIEW q4_percentages(assignment_id, username, group_id, percentage) AS
+SELECT assignment_id, username, group_id, (grade_recieved/total_mark)*100 as percentage
+FROM q4_grades;
+
+
+
 --to create a view for assignment already graded
 CREATE VIEW assignment_graded(assignment_id, group_id, username) AS
-SELECT graders_assigned.assignment_id, Result.group_id, graders_assigned.username
-FROM graders_assigned, Result
-WHERE graders_assigned.group_id = Result.group_id AND Result.released = true ;
+SELECT assignment_id, group_id, username
+FROM q4_percentages;
+
 
 --to creata a view for assignment not graded but graders assigned
 CREATE VIEW assignment_not_graded(assignment_id, group_id, username) AS
@@ -49,6 +73,7 @@ FROM graders_assigned
 WHERE (assignment_id, group_id, username) NOT IN (
 SELECT assignment_id, group_id, username
 FROM assignment_graded);
+
 
 --to count num of assignment graded
 CREATE VIEW count_assignment_graded(assignment_id, username, num_marked) AS
@@ -61,23 +86,6 @@ CREATE VIEW count_assignment_not_graded(assignment_id, username, num_not_marked)
 SELECT assignment_id, username, count(*)
 FROM assignment_not_graded
 GROUP BY assignment_id, username;
-
--- create a view for every grade by every group for every assignment
-CREATE VIEW q4_every_group_grade_for_every_assignment(assignment_id, username, group_id, rubric_id, weight, out_of, grade) AS
-SELECT RubricItem.assignment_id, Grader.username, Grade.group_id, RubricItem.rubric_id, RubricItem.weight, RubricItem.out_of, Grade.grade
-FROM RubricItem ,Grader, Grade
-WHERE RubricItem.rubric_id = Grade.rubric_id AND Grade.group_id = Grader.group_id;
-
--- create a view to calculate total mark and grades got
-CREATE VIEW q4_grades(assignment_id, username, group_id, total_mark, grade_recieved) AS
-SELECT assignment_id,username, group_id, SUM(weight*out_of) as total_mark, SUM(weight*grade) as grade_recieved
-FROM q4_every_group_grade_for_every_assignment
-GROUP BY assignment_id, username, group_id;
-
--- creata a view for percentage
-CREATE VIEW q4_percentages(assignment_id, username, group_id, percentage) AS
-SELECT assignment_id, username, group_id, (grade_recieved/total_mark)*100 as percentage
-FROM q4_grades;
 
 --create a view for min and max grade
 CREATE VIEW grade_min_max(assignment_id, username, min_mark, max_mark) AS
