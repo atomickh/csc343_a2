@@ -35,7 +35,7 @@ public class Assignment2 {
      * @return true if connecting is successful, false otherwise
      */
     public boolean connectDB(String URL, String username, String password) {
-	String pathURL;
+		String pathURL;
         try {
 	    pathURL = URL+"searchpath=markus";
             connection = DriverManager.getConnection(pathURL, username, password);
@@ -51,12 +51,24 @@ public class Assignment2 {
      * @return true if the closing was successful, false otherwise
      */
     public boolean disconnectDB() {
+		try {
+			if (rs != null){
+				rs.close();
+			}
+		} catch (Exception ex){}
+		try {
+			if (pStatement != null){
+				pStatement.close();
+			}
+		} catch (Exception ex){}
         try {
-            connection.close();
-            return true;
-        } catch (SQLException ex) {
-            return false;
-        }
+			if (connection != null){
+				connection.close();
+			}
+		} catch (Exception ex){
+			return false;
+		}
+		return true;
     }
 
     /**
@@ -120,10 +132,13 @@ public class Assignment2 {
 	    pStatement.setString(1, Integer.toString(groupID));
 	    pStatement.setString(2, grader);
 	    int updateRes = pStatement.executeUpdate();	    
-	    
+	    rs.close();
+		pStatement.close90;
 	    return true;
 	} catch (SQLException ex) {
-	    return false;
+	    rs.close();
+		pStatement.close90;
+		return false;
 	}
 
 
