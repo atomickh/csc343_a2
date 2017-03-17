@@ -18,14 +18,14 @@ DROP VIEW IF EXISTS multi_groups, solo_groups, should_contribute, contributed, a
 
 -- Define views for your intermediate steps here.
 
--- Groups that are allowed more than one people
+-- Groups that are allowed to have more than one people
 CREATE VIEW multi_groups AS (
 	SELECT t2.group_id 
 	FROM Assignment AS t1 JOIN AssignmentGroup AS t2
 		ON (t1.assignment_id = t2.assignment_id AND t1.group_max > 1)
 );
 
--- Groups where they are voluntarily solo
+-- Groups where students are allowed more than one but chose to work alone
 CREATE VIEW solo_groups AS (
 	(SELECT Membership.group_id
 	FROM Membership 
@@ -42,17 +42,20 @@ CREATE VIEW contributed AS (
 	      AND EXISTS(SELECT 1 FROM multi_groups WHERE Submissions.group_id = multi_groups.group_id)
 );
 
+-- All possible combinations of students and assignments
 CREATE VIEW should_contribute AS (
 	SELECT username, assignment_id
 	FROM MarkusUser CROSS JOIN Assignment
 	WHERE type = 'student'
 );
 
+-- Students that did not contribute for every assignment
 CREATE VIEW not_contributed AS (
 	SELECT username 
 	FROM (SELECT * FROM should_contribute EXCEPT SELECT * FROM contributed) AS t1
 );
 
+-- People who are always in groups when possible
 CREATE VIEW always_grouped AS (
 	(SELECT DISTINCT username FROM Membership NATURAL JOIN multi_groups)
 	EXCEPT 
@@ -60,6 +63,7 @@ CREATE VIEW always_grouped AS (
 	  FROM Membership NATURAL JOIN solo_groups)
 );
 
+-- total Assignment marks available
 CREATE VIEW assignment_total AS (
 	SELECT assignment_id, SUM(out_of*weight) AS total 
 	FROM RubricItem

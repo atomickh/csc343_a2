@@ -15,10 +15,15 @@ CREATE TABLE q10 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS assignment_total, group_marks, groups_one, a1_average, group_percent CASCADE;
+DROP VIEW IF EXISTS assignment_total CASCADE;
+DROP VIEW IF EXISTS group_marks CASCADE;
+DROP VIEW IF EXISTS groups_one CASCADE;
+DROP VIEW IF EXISTS a1_average CASCADE;
+DROP VIEW IF EXISTS group_percent CASCADE;
 
 -- Define views for your intermediate steps here.
 
+-- Calculate the total weighted rubric mark 
 CREATE VIEW assignment_total AS (
 	SELECT DISTINCT assignment_id, SUM(out_of*weight) AS total
 	FROM RubricItem NATURAL JOIN Assignment
@@ -39,25 +44,26 @@ CREATE VIEW groups_one AS (
 	FROM (AssignmentGroup NATURAL JOIN assignment_total)
 );
 
+-- Average mark for A1
 CREATE VIEW a1_average AS (
 	SELECT AVG(mark) AS average
 	FROM  groups_one NATURAL JOIN group_marks
 );
 
+-- Group percentage of every group assigned to A1
 CREATE VIEW group_percent AS (
 	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, 100*(t3.mark - t3.average)*t3.mark/(t3.mark*t3.total) AS compared_to_average 
 	FROM ((groups_one NATURAL LEFT JOIN a1_average) AS t1
 		NATURAL JOIN (groups_one NATURAL LEFT JOIN group_marks) AS t2) AS t3
 );
 
--- Final answer.
+-- Final answer with case in order to figure out status
 INSERT INTO q10(
 	SELECT group_id, mark, compared_to_average,
 		CASE WHEN compared_to_average = null THEN null 
 			 WHEN compared_to_average < 0 THEN 'below'
 			 WHEN compared_to_average > 0 THEN 'above'
 			 WHEN compared_to_average = 0 THEN 'at'
-			 
 		END AS status
 	FROM group_percent
 );

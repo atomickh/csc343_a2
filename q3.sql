@@ -120,7 +120,7 @@ GROUP BY assignment_id;
 
 -- required table for q3
 CREATE VIEW q3_required_table(assignment_id, description, num_solo, average_solo, num_collaborators, average_collaborators,average_students_per_group) AS
-SELECT assignments_list.assignment_id, assignments_list.description, coalesce(solo_students_stat.num_solo,0), solo_students_stat.average_solo, coalesce(collab_groups_stat.num_collaborators,0), collab_groups_stat.average_collaborators,CASE WHEN total_collab_groups = 0 THEN null ELSE (solo_students_stat.num_solo+collab_groups_stat.num_collaborators)/(collab_groups_stat.total_collab_groups) END as temp
+SELECT assignments_list.assignment_id, assignments_list.description, coalesce(solo_students_stat.num_solo,0), solo_students_stat.average_solo, coalesce(collab_groups_stat.num_collaborators,0), collab_groups_stat.average_collaborators,CASE WHEN total_collab_groups = 0 THEN null ELSE (solo_students_stat.num_solo+collab_groups_stat.num_collaborators)/(collab_groups_stat.total_collab_groups + num_solo) END as temp
 FROM assignments_list NATURAL FULL JOIN solo_students_stat NATURAL JOIN collab_groups_stat;
 -- Final answer
 INSERT INTO q3 (assignment_id, description, num_solo, average_solo, num_collaborators, average_collaborators,average_students_per_submission)
