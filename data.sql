@@ -21,6 +21,7 @@ INSERT INTO MarkusUser VALUES ('s3', 'sln3', 'sfn3', 'student');
 INSERT INTO MarkusUser VALUES ('s4', 'sln4', 'sfn4', 'student');
 INSERT INTO MarkusUser VALUES ('t1', 'tln1', 'tfn1', 'TA');
 INSERT INTO MarkusUser VALUES ('t2', 'tln2', 'tfn2', 'TA');
+INSERT INTO MarkusUser VALUES ('t3', 'tln3', 'tfn3', 'TA');
 
 INSERT INTO Assignment VALUES (1000, 'a1', '2017-02-08 20:00', 1, 1);
 INSERT INTO Assignment VALUES (2000, 'a2', '2017-02-08 20:00', 1, 2);
@@ -33,6 +34,7 @@ INSERT INTO AssignmentGroup VALUES (3000, 1000, 'repo_url3');
 INSERT INTO AssignmentGroup VALUES (4000, 1000, 'repo_url3');
 INSERT INTO AssignmentGroup VALUES (5000, 2000, 'repo_url');
 INSERT INTO AssignmentGroup VALUES (6000, 2000, 'repo_url');
+INSERT INTO AssignmentGroup VALUES (9000, 2000, 'repo_url');
 
 
 INSERT INTO Membership VALUES ('s1', 1000);
@@ -50,6 +52,7 @@ INSERT INTO Submissions VALUES (3000, 'A1.pdf', 's3', 3000, '2017-02-08 19:59');
 INSERT INTO Submissions VALUES (4000, 'A1.pdf', 's4', 4000, '2017-02-08 19:59');
 INSERT INTO Submissions VALUES (5000, 'A12.pdf', 's3', 3000, '2017-02-09 19:59');
 INSERT INTO Submissions VALUES (6000, 'A12.pdf', 's4', 4000, '2017-02-10 19:59');
+
 
 INSERT INTO Grader VALUES (1000, 't1');
 INSERT INTO Grader VALUES (2000, 't1');

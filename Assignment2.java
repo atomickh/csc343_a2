@@ -41,21 +41,15 @@ public class Assignment2 {
 	  connection = DriverManager.getConnection(URL, username, password);
 
 	  if (connection != null) {
-	    try {
-	      String queryString = "SET search_path TO markus";
-	      PreparedStatement pStatement = connection.prepareStatement(queryString);
-	      pStatement.execute();
-	    } catch (SQLException e) {
-		  e.printStackTrace();
-		  return false;
-	    }
-
-	    return true;
+	      String queryString = "SET search_path TO markus;";
+	      Statement s = connection.createStatement();
+	      boolean o = s.execute(queryString);
+	      
+	      return true;
 	  }
 	  return false;
-	}
-	catch (SQLException ex) {
-	  ex.printStackTrace();
+	} catch (SQLException e) {
+	  e.printStackTrace();
 	  return false;
 	}
     }
@@ -102,47 +96,50 @@ public class Assignment2 {
 
 	    if (rs.next()) {
 			String role = rs.getString("type");
-			if (role != "ta" && role != "instructor"){
+			if (!(role.equals("TA") || role.equals("instructor"))){
+				System.out.println("Guy isn't a ta");
 				return false;
 			}
 	    } else {
+		System.out.println("Not in Markus System");
 		return false;
 	    }
 	    
-	    
-	    // Check if group exists in AssignmentGroup
-	    queryString = "SELECT * FROM AssignmentGroup WHERE group_id = ?";
+	    // Check if group exists in AssignmentGroup 
+	    queryString = "SELECT * FROM AssignmentGroup WHERE AssignmentGroup.group_id =  ? ";
 	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, Integer.toString(groupID));
+	    pStatement.setInt(1, groupID);
 	    rs = pStatement.executeQuery();
 	    
 	    if (!rs.next()) {
-			return false;
+		System.out.println("Group Doesn't Exist");
+		return false;
 	    }
 	    
 	    // Check if group is already assigned
 	    queryString = "SELECT * FROM Grader WHERE group_id = ?";
 	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, Integer.toString(groupID));
+	    pStatement.setInt(1, groupID);
 	    rs = pStatement.executeQuery();
 	    
 	    if (rs.next()) {
-			return false;
+		System.out.println("Grader already exists");
+		return false;
 	    }
 	    
 	    // Insert row into Grader
 	    queryString = "INSERT INTO Grader (group_id, username) VALUES (?, ?);";
 	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, Integer.toString(groupID));
+	    pStatement.setInt(1, groupID);
 	    pStatement.setString(2, grader);
 	    int updateRes = pStatement.executeUpdate();	    
-
+	    
 	    return true;
 	} catch (SQLException e) {
 		e.printStackTrace();
+		System.out.println("Exception");
 		return false;
 	}
-
 
     }
 
@@ -177,8 +174,8 @@ public class Assignment2 {
 				  "WHERE group_id = ? "+
 				  "AND assignment_id = ? ;";
 			pStatement = connection.prepareStatement(queryString);
-			pStatement.setString(1, Integer.toString(groupID));
-			pStatement.setString(2, Integer.toString(assignmentID));
+			pStatement.setInt(1, groupID);
+			pStatement.setInt(2, assignmentID);
 			rs = pStatement.executeQuery();
 			Integer num_ppl = 0;
 			Boolean already_assigned = false;
@@ -196,8 +193,8 @@ public class Assignment2 {
 				  "WHERE (group_id = ? "+
 				  "AND assignment_id = ? );";
 			pStatement = connection.prepareStatement(queryString);
-			pStatement.setString(1, Integer.toString(groupID));
-			pStatement.setString(2, Integer.toString(assignmentID));
+			pStatement.setInt(1, groupID);
+			pStatement.setInt(2, assignmentID);
 			rs = pStatement.executeQuery();
 			if(rs.next()){
 				if (num_ppl >= rs.getInt("group_max")){
@@ -231,7 +228,7 @@ public class Assignment2 {
 				  "VALUES (?, ?);";
 			pStatement = connection.prepareStatement(queryString);
 			pStatement.setString(1, newMember);
-			pStatement.setString(2, Integer.toString(groupID));
+			pStatement.setInt(2, groupID);
 			int updateRes = pStatement.executeUpdate();	    
 			
 			return true;
@@ -299,20 +296,52 @@ public class Assignment2 {
 
     public static void main(String[] args) {
         // You can put testing code in here. It will not affect our autotester.
-        Assignment2 assign = new Assignment2 ();
+	Assignment2 assign;
+	
+	try {
+	    assign = new Assignment2();
+	    
+	    // Q1
+	    String testURL = "jdbc:postgresql://localhost:5432/csc343h-huanian";
+	    String testUser = "huanian";
+	    String testPass = "";
+	    System.out.println("q1");
+	    boolean q1 = assign.connectDB(testURL, testUser, testPass);        
+	    System.out.println(q1);
+	    
+	    //Q3
+	    /*
+	    int testID = 9000;
+	    String testGrader1 = "t2";
+	    String testGrader2 = "t5";
+	    
+	    System.out.println("q3");
+	    boolean q3a = assign.assignGrader(testID, testGrader1);        
+	    System.out.println(q3a);
+	    boolean q3b = assign.assignGrader(6000, testGrader2);        
+	    System.out.println(q3b);
+	    */
+	    //Q4
+	    int testID = 9000;
+	    String testGrader1 = "t2";
+	    String testGrader2 = "t5";
+	    
+	    System.out.println("q3");
+	    boolean q3a = assign.assignGrader(testID, testGrader1);        
+	    System.out.println(q3a);
+	    boolean q3b = assign.assignGrader(6000, testGrader2);        
+	    System.out.println(q3b);	    
+	    
+	    //Q2
+	    System.out.println("q2");
+	    boolean q2 = assign.disconnectDB();        
+	    System.out.println(q2);
+	    	    
+	    
+	    System.out.println("Boo!");
+        } catch (SQLException e) {
+	    e.printStackTrace();
+        }
         
-        String testURL = "jdbc:postgresql://localhost:5432/csc343h-huanian";
-        String testUser = "huanian";
-        String testPass = "";
-        System.out.println("q1");
-        boolean q1 = assign.connectDB(testURL, testUser, testPass);        
-        System.out.println(q1);
-        
-        System.out.println("q2");
-        boolean q2 = assign.disconnectDB();        
-        System.out.println(q2);
-        
-        
-        System.out.println("Boo!");
     }
 }
