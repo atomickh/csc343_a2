@@ -1,3 +1,4 @@
+
 -- Getting soft
 
 SET SEARCH_PATH TO markus;
@@ -12,7 +13,6 @@ CREATE TABLE q2 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS intermediate_step CASCADE;
 DROP VIEW IF EXISTS grader_history CASCADE;
 DROP VIEW IF EXISTS total_possible_mark_for_each_assignment CASCADE;
 DROP VIEW IF EXISTS grading_done CASCADE;
@@ -22,26 +22,51 @@ DROP VIEW IF EXISTS q2_avg_percentage CASCADE;
 DROP VIEW IF EXISTS constraint_one CASCADE;
 DROP VIEW IF EXISTS constraint_two CASCADE;
 DROP VIEW IF EXISTS constraint_third CASCADE;
+DROP VIEW IF EXISTS non_constraint_third CASCADE;
 DROP VIEW IF EXISTS q2_avg_percentage CASCADE;
 DROP VIEW IF EXISTS q2_total_avg_grader CASCADE;
 DROP VIEW IF EXISTS required_ta_names CASCADE;
 DROP VIEW IF EXISTS taNames CASCADE;
 DROP VIEW IF EXISTS increase CASCADE;
 DROP VIEW IF EXISTS q2_required_table CASCADE;
-
+DROP VIEW IF EXISTS q2_grade_details_for_every_assignment CASCADE;
+DROP VIEW IF EXISTS q2_grade_for_every_assignment_graded CASCADE;
+DROP VIEW IF EXISTS q2_grade_for_all_assignments CASCADE;
+DROP VIEW IF EXISTS q2_group_percentages CASCADE;
+DROP VIEW IF EXISTS total_assignments CASCADE;
+DROP VIEW IF EXISTS assignments_list CASCADE;
 -- Define views for your intermediate steps here.
+
+CREATE VIEW assignments_list(assignment_id,description) AS
+SELECT DISTINCT assignment_id, description
+FROM Assignment;
+
+-- create a view for every grade by every group for every assignment
+CREATE VIEW q2_grade_details_for_every_assignment(assignment_id, group_id, weight, out_of, grade) AS
+SELECT RubricItem.assignment_id, group_id, RubricItem.weight, RubricItem.out_of, Grade.grade
+FROM RubricItem NATURAL JOIN Grade;
+
+-- create a view to calculate total mark and grades got
+CREATE VIEW q2_grade_for_every_assignment_graded(assignment_id, group_id, total_mark, grade_recieved) AS
+SELECT assignment_id, group_id, SUM(weight*out_of) as total_mark, SUM(weight*grade) as grade_recieved
+FROM q2_grade_details_for_every_assignment
+GROUP BY assignment_id, group_id;
+
+CREATE VIEW q2_grade_for_all_assignments(assignment_id, group_id, out_of, grade) AS
+SELECT assignments_list.assignment_id, group_id, total_mark, grade_recieved
+FROM q2_grade_for_every_assignment_graded NATURAL FULL JOIN assignments_list;
+
+--view to store percentage of each assignment by each student
+CREATE VIEW q2_group_percentages(assignment_id, group_id, percentage) AS
+SELECT assignment_id, group_id,((grade)/(out_of)*100)
+FROM q2_grade_for_all_assignments;
 
 -- view for GraderHistory which shows every graded assignment by grader
 CREATE VIEW grader_history(username, assignment_id, assignment_due_date, group_id, total_mark) AS
-SELECT Grader.username, AssignmentGroup.assignment_id, Assignment.due_date, Grader.group_id, Result.mark
-FROM AssignmentGroup, Grader, Result, Assignment
-WHERE AssignmentGroup.group_id = Grader.group_id AND Grader.group_id = Result.group_id AND AssignmentGroup.assignment_id = Assignment.assignment_id AND Result.released = true;
-
+SELECT Grader.username, AssignmentGroup.assignment_id, Assignment.due_date, Grader.group_id, q2_group_percentages.percentage
+FROM AssignmentGroup NATURAL JOIN Grader NATURAL JOIN Result NATURAL JOIN Assignment NATURAL JOIN q2_group_percentages
+ORDER BY username, assignment_id, group_id;
 --view to calculate total out-of mark
-CREATE VIEW total_possible_mark_for_each_assignment(assignment_id, total_out_of) AS
-SELECT assignment_id, (SUM(weight*out_of)) as total_out_of
-FROM RubricItem
-GROUP BY assignment_id;
 
 -- to find number of people in a group
 CREATE VIEW group_strength(group_id, groupStrength) AS
@@ -50,10 +75,10 @@ FROM Membership
 GROUP BY group_id;
 
 --join upper three views
-CREATE VIEW grading_done(username, assignment_id, assignment_due_date, group_id, groupStrength, total_mark, total_out_of) AS
-SELECT grader_history.username, grader_history.assignment_id, grader_history.assignment_due_date, grader_history.group_id, group_strength.groupStrength, grader_history.total_mark,total_possible_mark_for_each_assignment.total_out_of
-FROM grader_history, total_possible_mark_for_each_assignment, group_strength
-WHERE grader_history.assignment_id = total_possible_mark_for_each_assignment.assignment_id AND grader_history.group_id = group_strength.group_id ;
+CREATE VIEW grading_done(username, assignment_id, assignment_due_date, group_id, groupStrength, percentage) AS
+SELECT username, assignment_id, assignment_due_date, group_id, groupStrength, total_mark
+FROM grader_history NATURAL JOIN group_strength;
+
 
 -- to check first constraint 'They have graded (that is, they have been assigned to at least one group) on every assignment'
 CREATE VIEW constraint_one(username) AS
@@ -64,52 +89,55 @@ HAVING count(DISTINCT grading_done.assignment_id) =
 (SELECT count(DISTINCT Assignment.assignment_id)
 FROM Assignment);
 
+--total no of assignments
+create view total_assignments(total) AS
+SELECT count(DISTINCT assignment_id)
+FROM Assignment;
 
--- to calculate percentage for each assignment for each group 
-CREATE VIEW q2_percentage(username, assignment_id, assignment_due_date, group_id, groupStrength, percentage) AS
-SELECT username, assignment_id, assignment_due_date, group_id, groupStrength, (total_mark/total_out_of*100)
-FROM grading_done;
 
 -- to check second constraint 'They have completed grading (that is, there is a grade recorded in the Result table) for at least 10 groups on each assignment.'
 CREATE VIEW constraint_two(username) AS
-SELECT username
-FROM q2_percentage
+SELECT DISTINCT username
+FROM grading_done
 GROUP BY username, assignment_id
 HAVING count(*)>=10;
-
-
 
 -- to calculate average for each assignment by grader
 CREATE VIEW q2_avg_percentage(username, assignment_id, assignment_due_date, avg_percentage) AS
 SELECT username, assignment_id, assignment_due_date, (SUM(groupStrength*percentage)/SUM(groupStrength))
-FROM q2_percentage
-GROUP BY username, assignment_id, assignment_due_date;
-
+FROM grading_done
+GROUP BY username, assignment_id, assignment_due_date
+ORDER BY username, assignment_id, assignment_due_date;
 
 -- to check third constraint 'The average grade they have given has gone up consistently from assignment to assignment over time (based on the assignment due date).'
-CREATE VIEW constraint_third(username, assignment_id) AS
-SELECT a.username, a.assignment_id
+CREATE VIEW non_constraint_third(username) AS
+SELECT DISTINCT a.username
 FROM q2_avg_percentage a, q2_avg_percentage b
-WHERE a.username = b.username AND a.assignment_id <> b.assignment_id AND a.assignment_due_date < b.assignment_due_date AND a.avg_percentage < b.avg_percentage
-GROUP BY a.username, a.assignment_id
-HAVING count(*) = (
-SELECT count(*)-1 as count
-FROM q2_avg_percentage c
-WHERE c.username = a.username AND c.assignment_id = a.assignment_id
-GROUP BY c.username, c.assignment_id
-);
+WHERE a.username = b.username AND a.assignment_id <> b.assignment_id AND a.assignment_due_date > b.assignment_due_date AND a.avg_percentage < b.avg_percentage
+--GROUP BY a.username, a.assignment_id
+--HAVING count(*) = (
+--SELECT count(*)-1 as count
+--FROM q2_avg_percentage c
+--WHERE c.username = a.username AND c.assignment_id = a.assignment_id
+--GROUP BY c.username, c.assignment_id
 
+;
+
+CREATE VIEW constraint_third(username) AS
+(SELECT DISTINCT username FROM grading_done)
+EXCEPT
+(SELECT DISTINCT username FROM non_constraint_third);
 -- to calculate overall average for each grader i.e. including all assignments
+
 CREATE VIEW q2_total_avg_grader(username, total_average) AS
-SELECT username,(SUM(percentage)/SUM(groupStrength))
-FROM q2_percentage
+SELECT username, avg(avg_percentage)
+FROM q2_avg_percentage
 GROUP BY username;
 
 -- to apply constraints to TA, i.e. apply our above three constraints
 CREATE VIEW required_ta_names(username) AS
 SELECT constraint_one.username
-FROM constraint_one, constraint_two, constraint_third
-WHERE constraint_one.username = constraint_two.username AND constraint_two.username = constraint_third.username;
+FROM constraint_one NATURAL JOIN constraint_two NATURAL JOIN constraint_third;
 
 -- to get TA name
 CREATE VIEW taNames(username, ta_name) AS

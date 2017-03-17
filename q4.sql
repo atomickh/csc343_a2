@@ -87,7 +87,7 @@ GROUP BY assignment_id, username;
 
 --required view
 CREATE VIEW q4_required_table(assignment_id, username, num_marked, num_not_marked, min_mark, max_mark) AS
-SELECT grade_min_max.assignment_id, grade_min_max.username, coalesce(num_marked,0), coalesce(num_not_marked,0), grade_min_max.min_mark, grade_min_max.max_mark
+SELECT assignment_id, username, coalesce(num_marked,0), coalesce(num_not_marked,0), grade_min_max.min_mark, grade_min_max.max_mark
 FROM count_assignment_not_graded NATURAL FULL JOIN grade_min_max NATURAL FULL JOIN count_assignment_graded;
 --WHERE (count_assignment_graded.assignment_id = grade_min_max.assignment_id AND count_assignment_not_graded.assignment_id = grade_min_max.assignment_id
 --AND count_assignment_graded.username = grade_min_max.username AND count_assignment_not_graded.username = grade_min_max.username)
