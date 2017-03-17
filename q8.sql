@@ -77,7 +77,7 @@ CREATE VIEW group_marks AS (
 	GROUP BY t1.group_id
 );
 
-
+-- The groups and usernames of students who meet the criterion
 CREATE VIEW group_associated AS (
 	SELECT group_id,username, assignment_id
 	FROM Membership AS t1 
@@ -96,7 +96,6 @@ CREATE VIEW group_average AS (
 		NATURAL JOIN assignment_total AS t3	
 	GROUP BY t1.username
 );
-
 
 CREATE VIEW solo_average AS (
 	SELECT t1.username, 100*AVG(t2.mark/t3.total) AS solo_average

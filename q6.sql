@@ -22,12 +22,15 @@ CREATE TABLE q6 (
 DROP VIEW IF EXISTS A1_group, first_sub, last_sub CASCADE;
 
 -- Define views for your intermediate steps here.
+
+-- Groups that are associated with A1
 CREATE VIEW A1_group AS (
 	SELECT group_id
 	FROM AssignmentGroup NATURAL JOIN Assignment
 	WHERE Assignment.description = 'A1'
 );
-	
+
+-- First submissions for each A1 group	
 CREATE VIEW first_sub AS (
 	SELECT t1.file_name, t1.username, t1.group_id, t1.submission_date
 	FROM Submissions AS t1
@@ -39,7 +42,7 @@ CREATE VIEW first_sub AS (
 		) AS t2 ON (t1.group_id = t2.group_id AND t1.submission_date = t2.first_date)
 );	
 		
-		
+-- Last submissions for each A1 Group	
 CREATE VIEW last_sub AS (
 	SELECT t1.file_name, t1.username, t1.group_id, t1.submission_date
 	FROM Submissions AS t1
