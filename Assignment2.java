@@ -66,6 +66,7 @@ public class Assignment2 {
 				connection.close();
 			}
 		} catch (Exception ex){
+			System.out.print(ex);
 			return false;
 		}
 		return true;
@@ -96,12 +97,12 @@ public class Assignment2 {
 	    rs = pStatement.executeQuery();
 
 	    if (rs.next()) {
-		String role = rs.getString("type");
-		if (role != "ta" && role != "instructor"){
-		    return false;
-		}
+			String role = rs.getString("type");
+			if (role != "ta" && role != "instructor"){
+				return false;
+			}
 	    } else {
-		return false;
+			return false;
 	    }
 	    
 	    
@@ -112,7 +113,7 @@ public class Assignment2 {
 	    rs = pStatement.executeQuery();
 	    
 	    if (!rs.next()) {
-		return false;
+			return false;
 	    }
 	    
 	    // Check if group is already assigned
@@ -122,12 +123,11 @@ public class Assignment2 {
 	    rs = pStatement.executeQuery();
 	    
 	    if (rs.next()) {
-		return false;
+			return false;
 	    }
 	    
 	    // Insert row into Grader
-	    queryString = "INSERT INTO Grader (group_id, username)"+
-			  "VALUES (?, ?);";
+	    queryString = "INSERT INTO Grader (group_id, username) VALUES (?, ?);";
 	    pStatement = connection.prepareStatement(queryString);
 	    pStatement.setString(1, Integer.toString(groupID));
 	    pStatement.setString(2, grader);
@@ -165,77 +165,78 @@ public class Assignment2 {
      * @return true if the operation was successful, false otherwise
      */
     public boolean recordMember(int assignmentID, int groupID, String newMember) {
-	PreparedStatement pStatement;
-	ResultSet rs;
-	String queryString;
-	try{
-	    // Check if member is already in group and get number of members in group,
-	    queryString = "SELECT * FROM Membership "+
-			  "NATURAL JOIN AssignmentGroup "+
-			  "WHERE group_id = ? "+
-			  "AND assignment_id = ? ;";
-	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, Integer.toString(groupID));
-	    pStatement.setString(2, Integer.toString(assignmentID));
-	    rs = pStatement.executeQuery();
-	    Integer num_ppl = 0;
-	    Boolean already_assigned = false;
-	    while(rs.next()){
-		num_ppl += 1;
-		if (rs.getString("username") == newMember) {
-		      already_assigned = true;
-		      break;
+		PreparedStatement pStatement;
+		ResultSet rs;
+		String queryString;
+		try{
+			// Check if member is already in group and get number of members in group,
+			queryString = "SELECT * FROM Membership "+
+				  "NATURAL JOIN AssignmentGroup "+
+				  "WHERE group_id = ? "+
+				  "AND assignment_id = ? ;";
+			pStatement = connection.prepareStatement(queryString);
+			pStatement.setString(1, Integer.toString(groupID));
+			pStatement.setString(2, Integer.toString(assignmentID));
+			rs = pStatement.executeQuery();
+			Integer num_ppl = 0;
+			Boolean already_assigned = false;
+			while(rs.next()){
+				num_ppl += 1;
+				if (rs.getString("username") == newMember) {
+				  already_assigned = true;
+				  break;
+				}
+			}
+			
+			// Check if assignment and group exists and group is not at capacity
+			queryString = "SELECT * FROM Assignment "+
+				  "NATURAL JOIN AssignmentGroup "+
+				  "WHERE (group_id = ? "+
+				  "AND assignment_id = ? );";
+			pStatement = connection.prepareStatement(queryString);
+			pStatement.setString(1, Integer.toString(groupID));
+			pStatement.setString(2, Integer.toString(assignmentID));
+			rs = pStatement.executeQuery();
+			if(rs.next()){
+				if (num_ppl >= rs.getInt("group_max")){
+					return false;
+				}
+			} else {
+				return false;
+			}
+			
+			// Check if newMember is a student
+			queryString = "SELECT * FROM MarkusUser"+
+				  "WHERE username = ? ;";
+			pStatement = connection.prepareStatement(queryString);
+			pStatement.setString(1, newMember);
+			rs = pStatement.executeQuery();
+			if(rs.next()){
+				if (rs.getString("type") != "student"){
+					return false;
+				}
+			} else {
+				return false;
+			}
+			
+			// If already assigned and no errors
+			if (already_assigned) {
+				return true;
+			}
+			
+			// Insert new row into Membership
+			queryString = "INSERT INTO Membership (username, group_id)"+
+				  "VALUES (?, ?);";
+			pStatement = connection.prepareStatement(queryString);
+			pStatement.setString(1, newMember);
+			pStatement.setString(2, Integer.toString(groupID));
+			int updateRes = pStatement.executeUpdate();	    
+			
+			return true;
+		} catch (SQLException ex) {
+			System.out.print(ex);
+			return false;
 		}
-	    }
-	    
-	    // Check if assignment and group exists and group is not at capacity
-	    queryString = "SELECT * FROM Assignment "+
-			  "NATURAL JOIN AssignmentGroup "+
-			  "WHERE (group_id = ? "+
-			  "AND assignment_id = ? );";
-	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, Integer.toString(groupID));
-	    pStatement.setString(2, Integer.toString(assignmentID));
-	    rs = pStatement.executeQuery();
-	    if(rs.next()){
-		if (num_ppl >= rs.getInt("group_max")){
-		      return false;
-		}
-	    } else {
-		return false;
-	    }
-	    
-	    // Check if newMember is a student
-	    queryString = "SELECT * FROM MarkusUser"+
-			  "WHERE username = ? ;";
-	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, newMember);
-	    rs = pStatement.executeQuery();
-	    if(rs.next()){
-		if (rs.getString("type") != "student"){
-		      return false;
-		}
-	    } else {
-		return false;
-	    }
-	    
-	    // If already assigned and no errors
-	    if (already_assigned) {
-		return true;
-	    }
-	    
-	    // Insert new row into Membership
-	    queryString = "INSERT INTO Membership (username, group_id)"+
-			  "VALUES (?, ?);";
-	    pStatement = connection.prepareStatement(queryString);
-	    pStatement.setString(1, newMember);
-	    pStatement.setString(2, Integer.toString(groupID));
-	    int updateRes = pStatement.executeUpdate();	    
-	    
-	    return true;
-	} catch (SQLException ex) {
-	    return false;
-	}
 
 
     }
