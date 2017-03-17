@@ -40,7 +40,6 @@ CREATE VIEW group_marks AS (
 	SELECT t1.group_id, t2.mark 
 	FROM AssignmentGroup AS t1 NATURAL LEFT JOIN Result AS t2
 );
-);
 
 
 -- Groups assigned to A1

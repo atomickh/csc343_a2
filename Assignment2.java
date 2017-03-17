@@ -15,6 +15,7 @@ public class Assignment2 {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
+	  
             e.printStackTrace();
         }
     }
@@ -37,24 +38,24 @@ public class Assignment2 {
     public boolean connectDB(String URL, String username, String password) {
 
 	try {
-	  connection = DriverManager.getConnection(url, username, password);
+	  connection = DriverManager.getConnection(URL, username, password);
 
 	  if (connection != null) {
 	    try {
 	      String queryString = "SET search_path TO markus";
 	      PreparedStatement pStatement = connection.prepareStatement(queryString);
 	      pStatement.execute();
-	    }
-	    catch (SQLException exs) {
-	      return false;
+	    } catch (SQLException e) {
+		  e.printStackTrace();
+		  return false;
 	    }
 
 	    return true;
 	  }
-
 	  return false;
 	}
 	catch (SQLException ex) {
+	  ex.printStackTrace();
 	  return false;
 	}
     }
@@ -68,9 +69,9 @@ public class Assignment2 {
 	  try {
 	    connection.close();
 	    return connection.isClosed();
-	  }
-	  catch (SQLException ex) {
-	    return false;
+	  } catch (SQLException e) {
+		e.printStackTrace();
+		return false;
 	  }
     }
 
@@ -88,10 +89,11 @@ public class Assignment2 {
      * @return true if the operation was successful, false otherwise
      */
     public boolean assignGrader(int groupID, String grader) {
-	PreparedStatement pStatement;
-	ResultSet rs;
-	String queryString;
+
 	try{
+	    PreparedStatement pStatement;
+	    ResultSet rs;
+	    String queryString;
 	    // Check if grader exists and is a ta 
 	    queryString = "SELECT * FROM MarkusUser WHERE username = ?";
 	    pStatement = connection.prepareStatement(queryString);
@@ -104,7 +106,7 @@ public class Assignment2 {
 				return false;
 			}
 	    } else {
-			return false;
+		return false;
 	    }
 	    
 	    
@@ -136,10 +138,9 @@ public class Assignment2 {
 	    int updateRes = pStatement.executeUpdate();	    
 
 	    return true;
-	} catch (SQLException ex) {
-	    rs.close();
-	    pStatement.close();
-	    return false;
+	} catch (SQLException e) {
+		e.printStackTrace();
+		return false;
 	}
 
 
@@ -166,10 +167,10 @@ public class Assignment2 {
      * @return true if the operation was successful, false otherwise
      */
     public boolean recordMember(int assignmentID, int groupID, String newMember) {
-		PreparedStatement pStatement;
-		ResultSet rs;
-		String queryString;
 		try{
+			PreparedStatement pStatement;
+			ResultSet rs;
+			String queryString;		
 			// Check if member is already in group and get number of members in group,
 			queryString = "SELECT * FROM Membership "+
 				  "NATURAL JOIN AssignmentGroup "+
@@ -234,8 +235,8 @@ public class Assignment2 {
 			int updateRes = pStatement.executeUpdate();	    
 			
 			return true;
-		} catch (SQLException ex) {
-			System.out.print(ex);
+		} catch (SQLException e) {
+			e.printStackTrace();
 			return false;
 		}
 
@@ -298,12 +299,20 @@ public class Assignment2 {
 
     public static void main(String[] args) {
         // You can put testing code in here. It will not affect our autotester.
+        Assignment2 assign = new Assignment2 ();
+        
         String testURL = "jdbc:postgresql://localhost:5432/csc343h-huanian";
         String testUser = "huanian";
         String testPass = "";
         System.out.println("q1");
-        Boolean q1 = connectDB(testURL, testUser, testPass);        
+        boolean q1 = assign.connectDB(testURL, testUser, testPass);        
         System.out.println(q1);
+        
+        System.out.println("q2");
+        boolean q2 = assign.disconnectDB();        
+        System.out.println(q2);
+        
+        
         System.out.println("Boo!");
     }
 }
