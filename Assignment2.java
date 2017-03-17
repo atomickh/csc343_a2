@@ -266,9 +266,45 @@ public class Assignment2 {
      *            the prefix of the URL for the group's repository
      * @return true if successful and false otherwise
      */
+
+    public class assignment_grades {
+    public int assignment_id;
+    public String username;
+    public float grade;
+ 
+    }
+
     public boolean createGroups(int assignmentToGroup, int otherAssignment,
             String repoPrefix) {
         // Replace this return statement with an implementation of this method!
+
+     // array list to hold  student grades from otherAssignment
+    ArrayList<assignment_grades> assignment_grades_arraylist = new ArrayList<assignment_grades>();
+    PreparedStatement pStatement;
+    ResultSet rs;
+    String queryString;
+
+    Statement st = conn.createStatement();
+    queryString = "SELECT assignment_id, username, grade " +
+                  "FROM AssignmentGroup NATURAL JOIN Membership NATURAL JOIN Result "
+                  "WHERE Result.released = true;" ;
+    ResultSet rs = st.executeQuery(queryString);
+     
+    while (rs.next()) {
+    //storing in class assignment_grades
+    assignment_grades student_record = new assignment_grades();
+    student_record.assignment_id = rs.getInt("assignment_id");
+    student_record.username = rs.getString("username");
+    student_record.grade = rs.getFloat("grade");
+    //adding to assignment_grades_arraylist
+    assignment_grades_arraylist.add(person);
+/* If the tuple also had a float and another int  
+attribute, you’d get them by calling   worths.getFloat(2) and worths.getInt(3). 
+Or you can look up values by attribute name.  Example: worths.getInt(netWorth) 
+*/
+   /* OMITTED: Process this net worth */
+}
+
         return false;
     }
 
