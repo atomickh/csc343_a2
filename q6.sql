@@ -1,3 +1,5 @@
+
+
 -- Steady work
 
 SET SEARCH_PATH TO markus;
@@ -23,7 +25,7 @@ DROP VIEW IF EXISTS A1_group, first_sub, last_sub CASCADE;
 CREATE VIEW A1_group AS (
 	SELECT group_id
 	FROM AssignmentGroup NATURAL JOIN Assignment
-	WHERE Assignment.description = 'a1'
+	WHERE Assignment.description = 'A1'
 );
 	
 CREATE VIEW first_sub AS (
@@ -65,4 +67,4 @@ INSERT INTO q6 (
 				ON(t1.group_id = t2.group_id)
 );
 	-- put a final query here so that its results will go into the table.
-	
+

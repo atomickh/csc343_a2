@@ -1,3 +1,5 @@
+
+
 -- High coverage
 
 SET SEARCH_PATH TO markus;
@@ -81,3 +83,4 @@ INSERT INTO q7 (
 	-- put a final query here so that its results will go into the table.
 
 	
+

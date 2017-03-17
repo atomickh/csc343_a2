@@ -1,3 +1,5 @@
+
+
 -- Inseparable
 
 SET SEARCH_PATH TO markus;
@@ -52,3 +54,4 @@ INSERT INTO q9 (
 	FROM (SELECT student1, student2 FROM all_pairs EXCEPT SELECT * FROM not_always) AS t1
 );
 	-- put a final query here so that its results will go into the table.
+

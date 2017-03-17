@@ -1,3 +1,5 @@
+
+
 -- A1 report
 
 SET SEARCH_PATH TO markus;
@@ -21,14 +23,13 @@ CREATE VIEW assignment_total AS (
 	SELECT DISTINCT assignment_id, SUM(out_of*weight) AS total
 	FROM RubricItem NATURAL JOIN Assignment
 	GROUP BY assignment_id, description
-	HAVING Assignment.description = 'a1'
+	HAVING Assignment.description = 'A1'
 );
 
 -- Group weighted marks (not percentage)
 CREATE VIEW group_marks AS (
 	SELECT t1.group_id, SUM(t2.weight*t1.grade) AS mark
-	FROM Grade AS t1 JOIN RubricItem AS t2
-	     ON (t1.rubric_id = t2.rubric_id)
+	FROM Grade AS t1 NATURAL JOIN RubricItem AS t2
 	GROUP BY t1.group_id
 );
 
@@ -61,6 +62,5 @@ INSERT INTO q10(
 	FROM group_percent
 );
 	-- put a final query here so that its results will go into the table.
-
-
 	
+

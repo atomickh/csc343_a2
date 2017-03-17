@@ -1,3 +1,5 @@
+
+
 -- Never solo by choice
 
 SET SEARCH_PATH TO markus;
@@ -12,7 +14,7 @@ CREATE TABLE q8 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS multi_groups, solo_groups, always_contributed, always_grouped, assignment_total, group_marks, group_associated, group_average, solo_average CASCADE;
+DROP VIEW IF EXISTS multi_groups, solo_groups, should_contribute, contributed, always_grouped, assignment_total, group_marks, group_associated, group_average, solo_average CASCADE;
 
 -- Define views for your intermediate steps here.
 
@@ -33,21 +35,30 @@ CREATE VIEW solo_groups AS (
 );
 
 -- The people and assignments for which they submitted files
-CREATE VIEW always_contributed AS (
-	SELECT Submissions.username
+CREATE VIEW contributed AS (
+	SELECT Submissions.username, AssignmentGroup.assignment_id
 	FROM Submissions NATURAL JOIN AssignmentGroup 
 	WHERE NOT EXISTS(SELECT 1 FROM solo_groups WHERE Submissions.group_id = solo_groups.group_id)
 	      AND EXISTS(SELECT 1 FROM multi_groups WHERE Submissions.group_id = multi_groups.group_id)
+);
+
+CREATE VIEW should_contribute AS (
+	SELECT username, assignment_id
+	FROM MarkusUser CROSS JOIN Assignment
+	WHERE type = 'student'
+);
+
+CREATE VIEW not_contributed AS (
+	SELECT username 
+	FROM (SELECT * FROM should_contribute EXCEPT SELECT * FROM contributed) AS t1
 );
 
 CREATE VIEW always_grouped AS (
 	(SELECT DISTINCT username FROM Membership NATURAL JOIN multi_groups)
 	EXCEPT 
 	( SELECT username 
-	  FROM Membership NATURAL JOIN solo_groups )
+	  FROM Membership NATURAL JOIN solo_groups)
 );
-
-
 
 CREATE VIEW assignment_total AS (
 	SELECT assignment_id, SUM(out_of*weight) AS total 
@@ -58,8 +69,7 @@ CREATE VIEW assignment_total AS (
 -- Group weighted marks (not percentage)
 CREATE VIEW group_marks AS (
 	SELECT t1.group_id, SUM(t2.weight*t1.grade) AS mark
-	FROM Grade AS t1 JOIN RubricItem AS t2
-	     ON (t1.rubric_id = t2.rubric_id)
+	FROM Grade AS t1 NATURAL RIGHT JOIN RubricItem AS t2
 	GROUP BY t1.group_id
 );
 
@@ -67,7 +77,7 @@ CREATE VIEW group_marks AS (
 CREATE VIEW group_associated AS (
 	SELECT group_id,username, assignment_id
 	FROM Membership AS t1 
-	     NATURAL JOIN (SELECT * FROM always_grouped INTERSECT SELECT * FROM always_contributed) AS t2 
+	     NATURAL JOIN (SELECT * FROM always_grouped EXCEPT SELECT * FROM not_contributed) AS t2 
 	     NATURAL JOIN AssignmentGroup AS t3
 );
 
@@ -79,8 +89,7 @@ CREATE VIEW group_average AS (
 	        JOIN group_marks AS t2 
 	        ON (t1.group_id = t2.group_id 
 		    AND EXISTS(SELECT 1 FROM multi_groups WHERE multi_groups.group_id = t1.group_id))
-		NATURAL JOIN assignment_total AS t3
-		
+		NATURAL JOIN assignment_total AS t3	
 	GROUP BY t1.username
 );
 
@@ -103,6 +112,8 @@ INSERT INTO q8(
 	ON t1.username = t2.username
 );
 	-- put a final query here so that its results will go into the table.
+
 	
 	
 	
+
