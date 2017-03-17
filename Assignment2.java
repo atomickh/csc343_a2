@@ -35,14 +35,28 @@ public class Assignment2 {
      * @return true if connecting is successful, false otherwise
      */
     public boolean connectDB(String URL, String username, String password) {
-		String pathURL;
-        try {
-	    pathURL = URL+"searchpath=markus";
-            connection = DriverManager.getConnection(pathURL, username, password);
-            return true;
-        } catch (SQLException ex) {
-            return false;
-        }
+
+	try {
+	  connection = DriverManager.getConnection(url, username, password);
+
+	  if (connection != null) {
+	    try {
+	      String queryString = "SET search_path TO markus";
+	      PreparedStatement pStatement = connection.prepareStatement(queryString);
+	      pStatement.execute();
+	    }
+	    catch (SQLException exs) {
+	      return false;
+	    }
+
+	    return true;
+	  }
+
+	  return false;
+	}
+	catch (SQLException ex) {
+	  return false;
+	}
     }
 
     /**
@@ -51,25 +65,13 @@ public class Assignment2 {
      * @return true if the closing was successful, false otherwise
      */
     public boolean disconnectDB() {
-		try {
-			if (rs != null){
-				rs.close();
-			}
-		} catch (Exception ex){}
-		try {
-			if (pStatement != null){
-				pStatement.close();
-			}
-		} catch (Exception ex){}
-        try {
-			if (connection != null){
-				connection.close();
-			}
-		} catch (Exception ex){
-			System.out.print(ex);
-			return false;
-		}
-		return true;
+	  try {
+	    connection.close();
+	    return connection.isClosed();
+	  }
+	  catch (SQLException ex) {
+	    return false;
+	  }
     }
 
     /**
@@ -132,13 +134,12 @@ public class Assignment2 {
 	    pStatement.setString(1, Integer.toString(groupID));
 	    pStatement.setString(2, grader);
 	    int updateRes = pStatement.executeUpdate();	    
-	    rs.close();
-		pStatement.close();
+
 	    return true;
 	} catch (SQLException ex) {
 	    rs.close();
-		pStatement.close();
-		return false;
+	    pStatement.close();
+	    return false;
 	}
 
 
@@ -292,39 +293,17 @@ public class Assignment2 {
 
     public boolean createGroups(int assignmentToGroup, int otherAssignment,
             String repoPrefix) {
-    /*     // Replace this return statement with an implementation of this method!
-
-     // array list to hold  student grades from otherAssignment
-    ArrayList<assignment_grades> assignment_grades_arraylist = new ArrayList<assignment_grades>();
-    PreparedStatement pStatement;
-    ResultSet rs;
-    String queryString;
-
-    Statement st = conn.createStatement();
-    queryString = "SELECT assignment_id, username, grade " +
-                  "FROM AssignmentGroup NATURAL JOIN Membership NATURAL JOIN Result "
-                  "WHERE Result.released = true;" ;
-    ResultSet rs = st.executeQuery(queryString);
-    while (rs.next()) {
-    //storing in class assignment_grades
-    assignment_grades student_record = new assignment_grades();
-    student_record.assignment_id = rs.getInt("assignment_id");
-    student_record.username = rs.getString("username");
-    student_record.grade = rs.getFloat("grade");
-    //adding to assignment_grades_arraylist
-    assignment_grades_arraylist.add(person);
-/* If the tuple also had a float and another int 
-attribute, you’d get them by calling  worths.getFloat(2) and worths.getInt(3).
-Or you can look up values by attribute name. Example: worths.getInt(netWorth)
-*/
-   /* OMITTED: Process this net worth */
-}
- */
         return false;
     }
 
     public static void main(String[] args) {
         // You can put testing code in here. It will not affect our autotester.
+        String testURL = "jdbc:postgresql://localhost:5432/csc343h-huanian";
+        String testUser = "huanian";
+        String testPass = "";
+        System.out.println("q1");
+        Boolean q1 = connectDB(testURL, testUser, testPass);        
+        System.out.println(q1);
         System.out.println("Boo!");
     }
 }

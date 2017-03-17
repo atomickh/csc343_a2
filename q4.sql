@@ -108,3 +108,6 @@ INSERT INTO q4(assignment_id, username, num_marked, num_not_marked, min_mark, ma
 FROM q4_required_table);
 
 -- put a final query here so that its results will go into the table.
+
+SELECT * FROM q4;
+

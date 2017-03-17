@@ -33,10 +33,15 @@ CREATE VIEW assignment_total AS (
 
 -- Group weighted marks (not percentage)
 CREATE VIEW group_marks AS (
-	SELECT t1.group_id, SUM(t2.weight*t1.grade) AS mark
-	FROM Grade AS t1 NATURAL JOIN RubricItem AS t2
-	GROUP BY t1.group_id
+	--SELECT t1.group_id, SUM(t2.weight*t1.grade) AS mark
+	--FROM Grade AS t1 NATURAL JOIN RubricItem AS t2
+	--GROUP BY t1.group_id
+	
+	SELECT t1.group_id, t2.mark 
+	FROM AssignmentGroup AS t1 NATURAL LEFT JOIN Result AS t2
 );
+);
+
 
 -- Groups assigned to A1
 CREATE VIEW groups_one AS (
