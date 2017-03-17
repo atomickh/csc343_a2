@@ -30,7 +30,7 @@ CREATE VIEW exist_group_pairs AS (
 -- ALready checked to ensure that first student is ahead of second student alphabetically
 CREATE VIEW exist_pairs AS (
 	SELECT t4.assignment_id, t3.student1, t3.student2 
-	FROM exisst_group_pairs AS t3
+	FROM exist_group_pairs AS t3
 		JOIN AssignmentGroup AS t4
 		ON (t3.group_id = t4.group_id)
 );
