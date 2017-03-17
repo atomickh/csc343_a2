@@ -18,10 +18,10 @@ DROP VIEW IF EXISTS assignment_total, group_marks, groups_one, a1_average, group
 -- Define views for your intermediate steps here.
 
 CREATE VIEW assignment_total AS (
-	SELECT DISTINCT assignment_id, SUM(out_of) AS total
+	SELECT DISTINCT assignment_id, SUM(out_of*weight) AS total
 	FROM RubricItem NATURAL JOIN Assignment
 	GROUP BY assignment_id, description
-	HAVING Assignment.description = 'A1'
+	HAVING Assignment.description = 'a1'
 );
 
 -- Group weighted marks (not percentage)
@@ -44,7 +44,7 @@ CREATE VIEW a1_average AS (
 );
 
 CREATE VIEW group_percent AS (
-	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, (t3.mark - t3.average)*t3.mark/t3.mark AS compared_to_average 
+	SELECT t3.group_id, 100*t3.mark/t3.total AS mark, 100*(t3.mark - t3.average)*t3.mark/(t3.mark*t3.total) AS compared_to_average 
 	FROM ((groups_one NATURAL LEFT JOIN a1_average) AS t1
 		NATURAL JOIN (groups_one NATURAL LEFT JOIN group_marks) AS t2) AS t3
 );
@@ -61,3 +61,6 @@ INSERT INTO q10(
 	FROM group_percent
 );
 	-- put a final query here so that its results will go into the table.
+
+
+	

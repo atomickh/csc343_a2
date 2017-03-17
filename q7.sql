@@ -54,12 +54,12 @@ CREATE VIEW exist_ts_pairs AS(
 
 -- All TA assignment pairs that can occur and actually occurred
 CREATE VIEW all_tas_pairs AS(
-	SELECT username, assignment_id
+	SELECT DISTINCT username, assignment_id
 	FROM all_pairs
 );
 
 CREATE VIEW exist_tas_pairs AS(
-	SELECT username, assignment_id
+	SELECT DISTINCT username, assignment_id
 	FROM exist_pairs
 );
 
@@ -67,10 +67,9 @@ CREATE VIEW not_output_ta AS (
 	SELECT username AS ta
 	FROM ((SELECT DISTINCT username 
 	      FROM (SELECT * FROM all_ts_pairs EXCEPT SELECT * FROM exist_ts_pairs) AS t1) 
-	INTERSECT ( SELECT DISTINCT username
+	UNION ( SELECT DISTINCT username
 	      FROM (SELECT * FROM all_tas_pairs EXCEPT SELECT * FROM exist_tas_pairs) AS t2)) AS t3
 );
-
 
 -- Final answer.
 INSERT INTO q7 (
@@ -80,3 +79,5 @@ INSERT INTO q7 (
 	SELECT * FROM not_output_ta
 );
 	-- put a final query here so that its results will go into the table.
+
+	

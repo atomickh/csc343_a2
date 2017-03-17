@@ -12,7 +12,7 @@ CREATE TABLE q8 (
 
 -- You may find it convenient to do this for each of the views
 -- that define your intermediate steps.  (But give them better names!)
-DROP VIEW IF EXISTS multi_groups, solo_groups, contributed, always_grouped, assignment_total, group_marks, group_associated, group_average, solo_average CASCADE;
+DROP VIEW IF EXISTS multi_groups, solo_groups, always_contributed, always_grouped, assignment_total, group_marks, group_associated, group_average, solo_average CASCADE;
 
 -- Define views for your intermediate steps here.
 
@@ -28,35 +28,29 @@ CREATE VIEW solo_groups AS (
 	(SELECT Membership.group_id
 	FROM Membership 
 	GROUP BY group_id
-	HAVING COUNT(username) = 1)
-	INTERSECT 
-	(SELECT * FROM multi_groups)
+	HAVING COUNT(username) <= 1)
+	INTERSECT (SELECT * FROM multi_groups)
 );
 
 -- The people and assignments for which they submitted files
-CREATE VIEW contributed AS (
-	SELECT DISTINCT Submissions.username, AssignmentGroup.assignment_id
-	FROM Submissions NATURAL JOIN AssignmentGroup NATURAL JOIN Assignment
+CREATE VIEW always_contributed AS (
+	SELECT Submissions.username
+	FROM Submissions NATURAL JOIN AssignmentGroup 
 	WHERE NOT EXISTS(SELECT 1 FROM solo_groups WHERE Submissions.group_id = solo_groups.group_id)
+	      AND EXISTS(SELECT 1 FROM multi_groups WHERE Submissions.group_id = multi_groups.group_id)
 );
 
 CREATE VIEW always_grouped AS (
-	(SELECT DISTINCT username FROM MarkusUser WHERE type = 'student')
+	(SELECT DISTINCT username FROM Membership NATURAL JOIN multi_groups)
 	EXCEPT 
 	( SELECT username 
-	  FROM Membership JOIN solo_groups 
-	  ON (Membership.group_id = solo_groups.group_id))
+	  FROM Membership NATURAL JOIN solo_groups )
 );
 
-CREATE VIEW not_always_contributed AS (
-	SELECT DISTINCT username 
-	FROM (SELECT username, assignment_id FROM MarkusUser CROSS JOIN Assignment WHERE type = 'student'
-			EXCEPT SELECT * FROM contributed) AS t1
-);
 
 
 CREATE VIEW assignment_total AS (
-	SELECT DISTINCT assignment_id, SUM(out_of*weight) AS total 
+	SELECT assignment_id, SUM(out_of*weight) AS total 
 	FROM RubricItem
 	GROUP BY assignment_id
 );
@@ -70,18 +64,13 @@ CREATE VIEW group_marks AS (
 );
 
 
-
--- Group with usernames that meet the criterions
 CREATE VIEW group_associated AS (
-	SELECT t1.group_id, t2.username, t3.assignment_id
-	FROM Result AS t1 JOIN Membership AS t2 
-		ON (t1.group_id = t2.group_id AND 
-			EXISTS(SELECT 1 
-				FROM (SELECT * FROM always_grouped EXCEPT SELECT * FROM not_always_contributed) AS t4
-				WHERE t2.username = t4.username))
-		JOIN AssignmentGroup AS t3
-		ON (t3.group_id = t1.group_id AND t3.group_id = t2.group_id)
+	SELECT group_id,username, assignment_id
+	FROM Membership AS t1 
+	     NATURAL JOIN (SELECT * FROM always_grouped INTERSECT SELECT * FROM always_contributed) AS t2 
+	     NATURAL JOIN AssignmentGroup AS t3
 );
+
 
 
 CREATE VIEW group_average AS (
@@ -114,3 +103,6 @@ INSERT INTO q8(
 	ON t1.username = t2.username
 );
 	-- put a final query here so that its results will go into the table.
+	
+	
+	
